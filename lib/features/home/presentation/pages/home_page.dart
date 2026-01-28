@@ -205,51 +205,56 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // ✅ Handle song tap with proper audio URL generation
-  void _onSongTap(Map<String, dynamic> song) {
-    final title = song['title'] ?? 'Unknown';
-    final artist = song['artist'] ?? 'Unknown Artist';
-    String audioUrl = song['audio_url'] ?? '';
-    final originalNote = song['original_note'] ?? 'Unknown';
+  // ✅ Handle song tap with proper audio URL + lyrics URL
+void _onSongTap(Map song) {
+  final title = song['title'] ?? 'Unknown';
+  final artist = song['artist'] ?? 'Unknown Artist';
+  String audioUrl = song['audio_url'] ?? '';
+  final originalNote = song['original_note'] ?? 'Unknown';
 
-    print('🔍 Raw audio_url from backend: "$audioUrl"');
+  // ✅ Ambil ID lagu dan bikin URL lirik
+  final songId = song['id'];
+  final String? lyricsUrl = songId != null
+      ? '${ApiConstants.baseUrl}api/songs/$songId/lyrics'
+      : null;
 
-    // ✅ FALLBACK: Generate audio URL if empty
-    if (audioUrl.isEmpty || audioUrl == '/') {
-      // Try to match filename pattern from server
-      // Format: "Title_Artist.mp3" with proper capitalization
-      String filename = '${title}_${artist}.mp3'
-          .replaceAll(' ', '_')
-          .replaceAll(RegExp(r'[^a-zA-Z0-9_.]'), '');
-      
-      audioUrl = '/audio/$filename';
-      print('🔧 Generated audio URL: $audioUrl');
-    }
+  print('🔍 Raw audio_url from backend: "$audioUrl"');
+  print('🎤 Lyrics URL: $lyricsUrl');
 
-    // Remove leading slash if baseUrl already has trailing slash
-    if (audioUrl.startsWith('/') && ApiConstants.baseUrl.endsWith('/')) {
-      audioUrl = audioUrl.substring(1);
-    }
-
-    // Construct full audio URL
-    final String fullAudioUrl = audioUrl.startsWith('http')
-        ? audioUrl
-        : '${ApiConstants.baseUrl}$audioUrl';
-
-    print('🎵 Opening player for: $title');
-    print('🎵 Full Audio URL: $fullAudioUrl');
-
-    // ✅ Navigate to audio player
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => SimpleAudioPlayerPage(
-          audioUrl: fullAudioUrl,
-          title: title,
-          artist: artist,
-          originalKey: originalNote,
-        ),
-      ),
-    );
+  // ✅ FALLBACK: Generate audio URL if empty
+  if (audioUrl.isEmpty || audioUrl == '/') {
+    String filename = '${title}_${artist}.mp3'
+        .replaceAll(' ', '_')
+        .replaceAll(RegExp(r'[^a-zA-Z0-9_.]'), '');
+    audioUrl = '/audio/$filename';
+    print('🔧 Generated audio URL: $audioUrl');
   }
+
+  // Remove leading slash if baseUrl already has trailing slash
+  if (audioUrl.startsWith('/') && ApiConstants.baseUrl.endsWith('/')) {
+    audioUrl = audioUrl.substring(1);
+  }
+
+  // Construct full audio URL
+  final String fullAudioUrl = audioUrl.startsWith('http')
+      ? audioUrl
+      : '${ApiConstants.baseUrl}$audioUrl';
+
+  print('🎵 Opening player for: $title');
+  print('🎵 Full Audio URL: $fullAudioUrl');
+
+  // ✅ Navigate to audio player + kirim lyricsUrl
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => SimpleAudioPlayerPage(
+        audioUrl: fullAudioUrl,
+        title: title,
+        artist: artist,
+        originalKey: originalNote,
+        lyricsUrl: lyricsUrl, // penting
+      ),
+    ),
+  );
+}
 }
