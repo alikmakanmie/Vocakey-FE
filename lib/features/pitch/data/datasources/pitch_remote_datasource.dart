@@ -6,7 +6,7 @@ import '../../../../core/errors/exceptions.dart';
 import '../models/analysis_model.dart';
 
 abstract class PitchRemoteDatasource {
-  Future<AnalysisModel> analyzeAudio(String audioPath);
+  Future<AnalysisModel> analyzeAudio(String audioPath);  // ✅ Kembali ke AnalysisModel
 }
 
 class PitchRemoteDatasourceImpl implements PitchRemoteDatasource {
@@ -24,35 +24,45 @@ class PitchRemoteDatasourceImpl implements PitchRemoteDatasource {
         audioPath,
       );
 
-      // ✅ DEBUG: Print response lengkap
       print('=== BACKEND RESPONSE ===');
       print('Status Code: ${response.statusCode}');
-      print('Response Data: ${response.data}');
-      print('Response Type: ${response.data.runtimeType}');
       print('========================');
 
       if (response.statusCode == 200) {
-        // Parse response
+        // ✅ Langsung parse ke AnalysisModel
+        // Backend akan return recommendations: [] jika tidak ada match
         final analysisResult = AnalysisModel.fromJson(response.data);
-        
-        print('✅ Parsed Result:');
-        // ✅ UPDATED: Use new property names
-        print('   Base Note: ${analysisResult.baseNote}');
-        print('   Base Frequency: ${analysisResult.baseFrequency} Hz');
-        print('   Song Key: ${analysisResult.fullKey}');
-        print('   Confidence: ${analysisResult.confidencePercentage.toStringAsFixed(1)}%');
-        print('   Recommendations: ${analysisResult.recommendations.length} songs');
-        
+        print('✅ Analysis successful with ${analysisResult.recommendations.length} recommendations');
+
         return analysisResult;
       } else {
-        throw ServerException(
-          'Failed to analyze audio: Status ${response.statusCode}',
-        );
+        throw ServerException('Failed to analyze: Status ${response.statusCode}');
       }
+      
     } on DioException catch (e) {
       print('❌ DioException: ${e.message}');
-      print('   Response: ${e.response?.data}');
+
+      // Better error handling
+      if (e.response?.statusCode == 422 || e.response?.statusCode == 400) {
+        final errorData = e.response?.data;
+
+        if (errorData != null && errorData is Map) {
+          final errorCode = errorData['error_code'];
+          final errorMessage = errorData['error'] ?? 'Unknown error';
+
+          if (errorCode == 'AUDIO_QUALITY') {
+            throw ServerException('Suara tidak terdeteksi dengan jelas. Coba humming lebih keras dan jelas.');
+          } else if (errorCode == 'NO_PITCH') {
+            throw ServerException('Suara/humming Anda tidak terdeteksi. Pastikan Anda bersenandung dengan nada yang jelas dan konsisten.');
+          }
+
+          // Generic 422/400 error - likely pitch detection failed
+          throw ServerException('Suara tidak terdeteksi. Coba humming dengan nada yang lebih jelas dan konsisten.');
+        }
+      }
+
       throw ServerException('Network error: ${e.message}');
+      
     } catch (e) {
       print('❌ Error in analyzeAudio: $e');
       throw ServerException(e.toString());
