@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/api_constants.dart';
 import '../../../../core/services/local_storage_service.dart';
@@ -140,17 +142,78 @@ class _PitchResultPageState extends State<PitchResultPage> {
     print('Opening audio player for: $title');
     print('Full Audio URL: $fullAudioUrl');
 
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => SimpleAudioPlayerPage(
-          audioUrl: fullAudioUrl,
-          title: title,
-          artist: artist,
-          originalKey: detectedKey,
-        ),
-      ),
-    );
+    // ✅ Cari song ID dari database untuk mendapatkan lirik
+    _fetchSongIdForLyrics(title, artist, fullAudioUrl, detectedKey);
+  }
+
+  Future<void> _fetchSongIdForLyrics(
+    String title,
+    String artist,
+    String audioUrl,
+    String detectedKey,
+  ) async {
+    try {
+      // Fetch semua songs dan cari yang match dengan title
+      final response = await http.get(
+        Uri.parse('${ApiConstants.baseUrl}api/songs?limit=100'),
+      );
+
+      print('🔍 Fetching all songs to find ID for: $title');
+
+      String? lyricsUrl;
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['success'] == true && data['songs'] != null) {
+          final songs = data['songs'] as List;
+          
+          // Cari lagu yang match dengan title (case-insensitive)
+          for (var s in songs) {
+            if (s['title']?.toString().toLowerCase() == title.toLowerCase()) {
+              final songId = s['id'];
+              if (songId != null) {
+                lyricsUrl = '${ApiConstants.baseUrl}api/songs/$songId/lyrics';
+                print('✅ Found song ID: $songId');
+                print('✅ Lyrics URL: $lyricsUrl');
+                break;
+              }
+            }
+          }
+        }
+      }
+
+      print('Final Lyrics URL: $lyricsUrl');
+
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => SimpleAudioPlayerPage(
+              audioUrl: audioUrl,
+              title: title,
+              artist: artist,
+              originalKey: detectedKey,
+              lyricsUrl: lyricsUrl,
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      print('❌ Error fetching song ID: $e');
+      // Fallback: navigate tanpa lirik
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => SimpleAudioPlayerPage(
+              audioUrl: audioUrl,
+              title: title,
+              artist: artist,
+              originalKey: detectedKey,
+            ),
+          ),
+        );
+      }
+    }
   }
 
   @override

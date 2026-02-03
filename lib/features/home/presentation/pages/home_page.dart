@@ -210,7 +210,7 @@ void _onSongTap(Map song) {
   final title = song['title'] ?? 'Unknown';
   final artist = song['artist'] ?? 'Unknown Artist';
   String audioUrl = song['audio_url'] ?? '';
-  final originalNote = song['original_note'] ?? 'Unknown';
+  final originalNote = song['detected_key'] ?? song['original_note'] ?? 'Unknown';
 
   // ✅ Ambil ID lagu dan bikin URL lirik
   final songId = song['id'];

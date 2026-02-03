@@ -9,6 +9,8 @@ class PitchBloc extends Bloc<PitchEvent, PitchState> {
 
   PitchBloc({required this.analyzeAudio}) : super(PitchInitial()) {
     on<AnalyzeAudioEvent>(_onAnalyzeAudio);
+    on<ResetPitchEvent>(_onReset);
+    on<RetryRecordingEvent>(_onRetry);
   }
 
   Future<void> _onAnalyzeAudio(
@@ -18,69 +20,50 @@ class PitchBloc extends Bloc<PitchEvent, PitchState> {
     print('🔵 BLoC: Starting analysis...');
     print('   Audio path: ${event.audioPath}');
 
-    // Progress 0%
-    emit(PitchAnalyzing(
-      progress: 0.0,
-      statusMessage: 'Initializing...',
-    ));
-    print('📊 Progress: 0% - Initializing...');
+    emit(PitchAnalyzing(progress: 0.0, statusMessage: 'Initializing...'));
     await Future.delayed(const Duration(milliseconds: 800));
 
-    // Progress 30%
-    emit(PitchAnalyzing(
-      progress: 0.3,
-      statusMessage: 'Uploading audio...',
-    ));
-    print('📊 Progress: 30% - Uploading audio...');
+    emit(PitchAnalyzing(progress: 0.3, statusMessage: 'Uploading audio...'));
     await Future.delayed(const Duration(milliseconds: 600));
 
-    // Progress 60%
-    emit(PitchAnalyzing(
-      progress: 0.6,
-      statusMessage: 'Detecting pitch...',
-    ));
-    print('📊 Progress: 60% - Detecting pitch...');
+    emit(PitchAnalyzing(progress: 0.6, statusMessage: 'Detecting pitch...'));
 
-    // Call API
     final result = await analyzeAudio(event.audioPath);
 
-    // Check if emitter is still active
     if (emit.isDone) {
-      print('⚠️ BLoC: Emitter already closed, skipping emit');
+      print('⚠️  BLoC: Emitter already closed, skipping emit');
       return;
     }
 
-    // Extract hasil dan emit
     await result.fold(
       (failure) async {
         print('❌ BLoC: Analysis failed - ${failure.message}');
         emit(PitchAnalysisError(failure.message));
-        print('🔴 BLoC: State emitted - PitchAnalysisError');
       },
       (success) async {
+        // ✅ SIMPLE: Langsung emit success, biar UI yang handle empty recommendations
         print('✅ BLoC: Analysis success!');
         print('   Base Note: ${success.baseNote}');
-        print('   Base Frequency: ${success.baseFrequency} Hz');
-        print('   Song Key: ${success.fullKey}');
-        print('   Confidence: ${success.confidencePercentage.toStringAsFixed(1)}%');
         print('   Recommendations: ${success.recommendations.length} songs');
 
-        // Progress 90%
-        emit(PitchAnalyzing(
-          progress: 0.9,
-          statusMessage: 'Finalizing...',
-        ));
-        print('📊 Progress: 90% - Finalizing...');
-
-        // Await delay before final emit
+        emit(PitchAnalyzing(progress: 0.9, statusMessage: 'Finalizing...'));
         await Future.delayed(const Duration(milliseconds: 500));
 
-        // Check if still active before final emit
         if (!emit.isDone) {
           emit(PitchAnalysisSuccess(success));
           print('🟢 BLoC: State emitted - PitchAnalysisSuccess');
         }
       },
     );
+  }
+
+  void _onReset(ResetPitchEvent event, Emitter<PitchState> emit) {
+    print('🔄 BLoC: Resetting to initial state');
+    emit(PitchInitial());
+  }
+
+  void _onRetry(RetryRecordingEvent event, Emitter<PitchState> emit) {
+    print('🔄 BLoC: Retry recording');
+    emit(PitchInitial());
   }
 }

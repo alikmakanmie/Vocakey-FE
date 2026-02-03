@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/api_constants.dart';
 import '../../../../core/utils/responsive_helper.dart';
-import 'song_detail_page.dart';
+import '../../../music/presentation/pages/simple_audio_player_page.dart';
 
 class SongListPage extends StatefulWidget {
   const SongListPage({Key? key}) : super(key: key);
@@ -252,16 +253,30 @@ class _SongListPageState extends State<SongListPage> {
           size: ResponsiveHelper.largeIcon,
         ),
         onTap: () {
-          Navigator.pushNamed(
+          final title = song['title'] ?? 'Unknown';
+          final artist = song['artist'] ?? 'Unknown Artist';
+          final audioUrl = song['audio_url'] ?? '';
+          final originalKey = song['detected_key'] ?? song['original_note'] ?? 'Unknown';
+          
+          final songId = song['id'];
+          final String? lyricsUrl = songId != null
+              ? '${ApiConstants.baseUrl}api/songs/$songId/lyrics'
+              : null;
+          
+          String fullAudioUrl = audioUrl.startsWith('http')
+              ? audioUrl
+              : '${ApiConstants.baseUrl}$audioUrl';
+
+          Navigator.push(
             context,
-            '/song-detail',
-            arguments: SongDetailArguments(
-              songTitle: song['title'] ?? 'Unknown',
-              realArtist: song['artist'] ?? 'Unknown Artist',
-              realOriginalKey: song['original_key'] ?? 'C major',
-              realUserKey: 'C major', // TODO: Get from user preferences
-              coverImageUrl: null,
-              audioUrl: song['audio_url'],
+            MaterialPageRoute(
+              builder: (context) => SimpleAudioPlayerPage(
+                audioUrl: fullAudioUrl,
+                title: title,
+                artist: artist,
+                originalKey: originalKey,
+                lyricsUrl: lyricsUrl,
+              ),
             ),
           );
         },

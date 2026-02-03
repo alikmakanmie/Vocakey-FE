@@ -41,9 +41,6 @@ class _MainLayoutState extends State<MainLayout> {
           children: const [
             HomePage(),
             SongListPage(),
-            TransposePage(),
-            ProfilePage(),
-            SettingsPage(),
           ],
         ),
         // ✅ FloatingActionButton di tengah
@@ -77,41 +74,21 @@ class _MainLayoutState extends State<MainLayout> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Left side items
-                Row(
-                  children: [
-                    _buildNavItem(
-                      icon: Icons.home,
-                      label: 'Beranda',
-                      index: 0,
-                    ),
-                    const SizedBox(width: 8),
-                    _buildNavItem(
-                      icon: Icons.music_note,
-                      label: 'Lagu',
-                      index: 1,
-                    ),
-                  ],
+                // Beranda di kiri
+                _buildNavItem(
+                  icon: Icons.home,
+                  label: 'Beranda',
+                  index: 0,
                 ),
                 
                 // ✅ Spacer untuk FAB di tengah
                 const SizedBox(width: 64),
                 
-                // Right side items
-                Row(
-                  children: [
-                    _buildNavItem(
-                      icon: Icons.person,
-                      label: 'Profil',
-                      index: 3,
-                    ),
-                    const SizedBox(width: 8),
-                    _buildNavItem(
-                      icon: Icons.settings,
-                      label: 'Pengaturan',
-                      index: 4,
-                    ),
-                  ],
+                // Lagu di kanan
+                _buildNavItem(
+                  icon: Icons.music_note,
+                  label: 'Lagu',
+                  index: 1,
                 ),
               ],
             ),
@@ -136,9 +113,10 @@ class _MainLayoutState extends State<MainLayout> {
       },
       borderRadius: BorderRadius.circular(8),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         constraints: const BoxConstraints(
-          minWidth: 64, // ✅ Minimum width
+          minWidth: 75,
+          minHeight: 56,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -149,16 +127,16 @@ class _MainLayoutState extends State<MainLayout> {
               color: isActive 
                   ? AppColors.primaryBlue 
                   : Colors.grey.shade600,
-              size: 24,
+              size: 28,
             ),
-            const SizedBox(height: 2),
+            const SizedBox(height: 4),
             Text(
               label,
               style: TextStyle(
                 color: isActive 
                     ? AppColors.primaryBlue 
                     : Colors.grey.shade600,
-                fontSize: 10,
+                fontSize: 11,
                 fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
               ),
               maxLines: 1,

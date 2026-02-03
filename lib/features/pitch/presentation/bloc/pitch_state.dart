@@ -12,15 +12,9 @@ abstract class PitchState extends Equatable {
 class PitchInitial extends PitchState {}
 
 /// State saat recording sedang berlangsung
-/// ✅ NEW: Tambah progress, amplitude, dan isRecording flag
 class PitchRecording extends PitchState {
-  /// Durasi recording dalam detik
   final int duration;
-  
-  /// Audio amplitude (0.0 - 1.0) untuk visualisasi
   final double amplitude;
-  
-  /// Flag untuk menandakan recording aktif
   final bool isRecording;
 
   PitchRecording({
@@ -30,9 +24,8 @@ class PitchRecording extends PitchState {
   });
 
   @override
-  List<Object?> get props => [duration, amplitude, isRecording];
-  
-  /// Helper untuk format duration (MM:SS)
+  List<Object> get props => [duration, amplitude, isRecording];
+
   String get formattedDuration {
     final minutes = duration ~/ 60;
     final seconds = duration % 60;
@@ -48,15 +41,12 @@ class PitchRecordingComplete extends PitchState {
   PitchRecordingComplete(this.audioPath, {this.totalDuration = 0});
 
   @override
-  List<Object?> get props => [audioPath, totalDuration];
+  List<Object> get props => [audioPath, totalDuration];
 }
 
-/// ✅ IMPROVED: State saat analisis sedang berlangsung
+/// State saat analisis sedang berlangsung
 class PitchAnalyzing extends PitchState {
-  /// Progress analisis (0.0 - 1.0)
   final double progress;
-  
-  /// Status message untuk ditampilkan ke user
   final String statusMessage;
 
   PitchAnalyzing({
@@ -65,9 +55,8 @@ class PitchAnalyzing extends PitchState {
   });
 
   @override
-  List<Object?> get props => [progress, statusMessage];
-  
-  /// Progress dalam persentase (0-100)
+  List<Object> get props => [progress, statusMessage];
+
   int get progressPercentage => (progress * 100).round();
 }
 
@@ -78,7 +67,7 @@ class PitchAnalysisSuccess extends PitchState {
   PitchAnalysisSuccess(this.result);
 
   @override
-  List<Object?> get props => [result];
+  List<Object> get props => [result];
 }
 
 /// State saat analisis error
@@ -101,10 +90,10 @@ class PitchPermissionDenied extends PitchState {
   });
 
   @override
-  List<Object?> get props => [message];
+  List<Object> get props => [message];
 }
 
-/// ✅ NEW: State saat recording dibatalkan/stopped
+/// State saat recording dibatalkan/stopped
 class PitchRecordingStopped extends PitchState {
   final String? audioPath;
   final int duration;
@@ -118,5 +107,5 @@ class PitchRecordingStopped extends PitchState {
   List<Object?> get props => [audioPath, duration];
 }
 
-/// ✅ NEW: State untuk idle (after success, user bisa record lagi)
+/// State untuk idle (after success, user bisa record lagi)
 class PitchIdle extends PitchState {}
